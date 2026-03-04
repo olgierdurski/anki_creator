@@ -25,7 +25,7 @@ def scrape_cambridge_dictionary(word):
     # 1. Phonetic form (British modern RP IPA)
     ipa_nodes = soup.select('.uk .ipa')
     ipa = ipa_nodes[0].text.strip() if ipa_nodes else None
-
+    ipa = f"/{ipa}/"
     # 2. Definition
     def_nodes = soup.select('.def.ddef_d')
     definition = def_nodes[0].text.strip() if def_nodes else None
