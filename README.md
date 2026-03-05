@@ -6,13 +6,10 @@ It was created for a personal use as a solution to hours spent on preparing flas
 
 
 📦 Dependencies
-To run this script, you will need to install the following Python packages:
+To run this script, the following Python packages are required:
 
-genanki: Generates the native Anki deck format.
-
-pandas: Handles the data processing of your word lists.
-
-beautifulsoup4: Parses the HTML structure of the dictionary website.
-
-requests: Manages the HTTP connections to fetch definitions and audio.
+1. genanki: Generates the native Anki deck format.
+2. pandas: Handles the data processing of your word lists.
+3. beautifulsoup4: Parses the HTML structure of the dictionary website.
+4. requests: Manages the HTTP connections to fetch definitions and audio.
 
