@@ -1,14 +1,15 @@
 from bs4 import BeautifulSoup
-import json
 import requests
 import os
-
 from soupsieve.util import lower
+
+
+##The code below was mostly created by AI, it was only implemented and adjusted accordingly to my needs
 
 
 def scrape_cambridge_dictionary(word):
 
-    word = lower(word)
+    word = lower(word).strip()
     url = f"https://dictionary.cambridge.org/dictionary/english/{word}"
 
     headers = {
@@ -22,10 +23,10 @@ def scrape_cambridge_dictionary(word):
 
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    # 1. Phonetic form (British modern RP IPA)
+    # 1. Phonetic form - IPA
     ipa_nodes = soup.select('.uk .ipa')
     ipa = ipa_nodes[0].text.strip() if ipa_nodes else None
-
+    ipa = f"/{ipa}/"
     # 2. Definition
     def_nodes = soup.select('.def.ddef_d')
     definition = def_nodes[0].text.strip() if def_nodes else None
@@ -34,7 +35,7 @@ def scrape_cambridge_dictionary(word):
     ex_nodes = soup.select('.eg.deg')
     example = ex_nodes[0].text.strip() if ex_nodes else None
 
-    # 4. Voice recording (British audio link)
+    # 4. Voice recording
     audio_nodes = soup.select('.uk audio source[type="audio/mpeg"]')
     audio_url = None
     if audio_nodes and 'src' in audio_nodes[0].attrs:
@@ -46,9 +47,8 @@ def scrape_cambridge_dictionary(word):
 
 
 def download_audio(audio_url, filename, save_directory):
-    """
-    Downloads the audio file from the provided URL to a specified directory.
-    """
+
+    #Downloads the audio into pointed location
     if not audio_url:
         print("Error: No audio URL provided.")
         return False
@@ -63,7 +63,6 @@ def download_audio(audio_url, filename, save_directory):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
 
-    # stream=True ensures the file is downloaded in chunks, preventing memory overload
     response = requests.get(audio_url, headers=headers, stream=True)
 
     if response.status_code == 200:
@@ -75,19 +74,3 @@ def download_audio(audio_url, filename, save_directory):
     else:
         print(f"Error: Failed to download audio. HTTP Status: {response.status_code}")
         return False
-
-
-if __name__ == "__main__":
-    #Execution example
-    sample_url = "https://dictionary.cambridge.org/media/english/uk_pron/u/ukr/ukras/ukrasp_022.mp3"
-    target_folder = r"C:\Users\olgie\Desktop\ANKIPROJEKT\audio_files"
-    file_name = "rational_uk.mp3"
-
-    download_audio(sample_url, file_name, target_folder)
-
-
-
-if __name__ == "__main__":
-    target_word = "Abhorrent"
-    extracted_data = scrape_cambridge_dictionary(target_word)
-    print(json.dumps(extracted_data, indent=4, ensure_ascii=False))
