@@ -1,14 +1,14 @@
 from warnings import catch_warnings
-
 import genanki
 import pandas as pd
 from the_data_scraper import scrape_cambridge_dictionary, download_audio
 
-#Utworzenie tali
-my_deck = genanki.Deck(2051478910, "ANG")
+#Deck creation - deck_id should be unique
+my_deck = genanki.Deck(2051478910, "Eng")
 my_package = genanki.Package(my_deck)
 
-##CSS code to customize the cards
+##CSS code to customize the cards - 95% AI generated!!!
+##Html and css parts of the code below are mostly AI generated!
 style_listening = """
 /* 1. Base Card Style */
 .card {
@@ -132,19 +132,18 @@ hr {
 """
 
 
-
-#Deklaracja modeli - struktury fiszek:
+#Declaration of 2 different types of flashcards:
 model_listening = genanki.Model(
           212634552,
           'Model recording to definition',
-          #Definiuje pola na fiszce
+          #Fields of the flashcard
           fields=[
             {'name': 'MyMedia'},
             {'name': 'Definition'},
             {'name': 'Ipa'},
 
           ],
-          #Układam pola w układzie jaki mi pasuje
+          #Ordering the fields into desired combination
           templates=[
             {
               'name': 'Card sound_practice',
@@ -156,6 +155,7 @@ model_listening = genanki.Model(
             }
 
           ],
+            #Defining visual aspect
             css = style_listening)
 
 model_cloze = genanki.Model(
@@ -170,11 +170,12 @@ model_cloze = genanki.Model(
             {'name': 'emptystring'}
 
           ],
-          #Układam pola w układzie jaki mi pasuje
+
           templates=[
             {
               'name': 'Card cloze',
-                # Przednia strona (Pytanie)
+
+                #Front side
                 'qfmt': """{{cloze:Example}}<span id="definition">{{Definition}}</span><hr>
                 <script>
                   var clozeElement = document.querySelector('.cloze');
@@ -183,7 +184,7 @@ model_cloze = genanki.Model(
                   }
                 </script>""",
 
-                # Tylna strona (Odpowiedź)
+                #Back side
                 'afmt': '''
               {{FrontSide}}
               <div id="answer-container">
@@ -198,7 +199,7 @@ model_cloze = genanki.Model(
 )
 
 
-#wygenerowanie fiszki - petla - potrzebuje string string oraz nazwa pliku
+#Basically a loop that organizes all the elements into ready anki flashcard
 def create_deck_file(deck_file_name, word_list):
     lista = word_list
     recordings_files = []
@@ -227,10 +228,12 @@ def create_deck_file(deck_file_name, word_list):
     my_package.media_files = recordings_files
     my_package.write_to_file(f'{deck_file_name}.apkg')
 
-#Supporting function for creating cloze flashcards
+#String operation required to create html code for cloze card type
 def cloze_creator(sentence, word):
         return sentence.replace(word, f"{{{{c1::{word}}}}}")
 
+
+#The function takes a raw DataFrame of words and appends the definition, IPA, audio recording, and an example sentence for each word from the Cambridge Dictionary.
 def prepare_word_list(word_list):
     word_list = word_list
     full_word_list = pd.DataFrame(columns = ["Word", "Definition", "Ipa", "Recording", "Example"])
@@ -243,7 +246,7 @@ def prepare_word_list(word_list):
         #Assiging the elements
         full_word_list.loc[current_row, ["Word", "Definition", "Ipa", "Recording", "Example"]] = [word, definition, ipa, recording_file_name, example]
 
-        #Downloading audio file to the chosen directory
+        #Downloading audio file to the chosen directory - "path" shall be the directory location
         download_audio(audio_url, recording_file_name, r"path")
 
     full_word_list.to_excel("updated.xlsx")
@@ -252,10 +255,8 @@ def prepare_word_list(word_list):
 
 
 
-#if __name__ == "__main__":
-    #imported_word_list = pd.read_excel("lista_slowek.xlsx", header=None)
-    #full_word_list = prepare_word_list(imported_word_list)
-    #create_deck_file("testowy.apkg", full_word_list)
-
 if __name__ == "__main__":
-    create_deck_file("ouput.apkg", pd.read_excel("updated.xlsx"))
+    imported_word_list = pd.read_excel("raw_word_list.xlsx", header=None)
+    full_word_list = prepare_word_list(imported_word_list)
+    create_deck_file("ready_to_import.apkg", full_word_list)
+
