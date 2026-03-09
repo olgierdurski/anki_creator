@@ -77,14 +77,22 @@ async def process_single_word(word, save_directory):
 
 
 #Main function that  manages creating the recordings
+# async def create_audio(words, save_directory):
+#     if not os.path.exists(save_directory):
+#         os.makedirs(save_directory)
+#
+#     #Task list
+#     tasks = [process_single_word(word, save_directory) for word in words]
+#
+#     #simultaneously realizing the task defined above
+#     await asyncio.gather(*tasks)
+
+
 async def create_audio(words, save_directory):
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
-    #Task list
-    tasks = [process_single_word(word, save_directory) for word in words]
-
-    #simultaneously realizing the task defined above
-    await asyncio.gather(*tasks)
+    for word in words:
+        await process_single_word(word, save_directory)
 
 

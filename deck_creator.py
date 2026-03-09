@@ -122,7 +122,7 @@ hr {
 
 #Declaration of 2 different types of flashcards:
 model_listening = genanki.Model(
-          212634552,
+          212134552,
           'Model recording to definition',
           #Fields of the flashcard
           fields=[
@@ -240,9 +240,10 @@ def prepare_word_list(word_list):
 
 
 if __name__ == "__main__":
-    #imported_word_list = pd.read_excel(r"word_lists/raw_word_list.xlsx", header=None)
-    #full_word_list = prepare_word_list(imported_word_list)
+    imported_word_list = pd.read_excel(r"word_lists/updated.xlsx")
+    create_deck_file("ready_to_import.apkg", imported_word_list)
 
-    pd.read_excel("./word_lists/updated.xlsx")
-    create_deck_file("ready_to_import", pd.read_excel("./word_lists/updated.xlsx"))
+
+
+
 
