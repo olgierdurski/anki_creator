@@ -1,16 +1,25 @@
 from bs4 import BeautifulSoup
 import requests
-import os
 from soupsieve.util import lower
+import edge_tts
+import asyncio
+import edge_tts
+import os
+import re
 
 
 ##The code below was mostly created by AI, it was only implemented and adjusted accordingly to my needs
 
 
-def scrape_cambridge_dictionary(word):
 
-    word = lower(word).strip()
-    url = f"https://dictionary.cambridge.org/dictionary/english/{word}"
+
+
+def scrape_cambridge_dictionary(query):
+
+    query = query.lower().strip()
+
+    url_query = query.replace(' ', '-')
+    url = f"https://dictionary.cambridge.org/dictionary/english/{url_query}"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
@@ -19,14 +28,24 @@ def scrape_cambridge_dictionary(word):
     response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
-        return {"error": f"Failed to retrieve page. HTTP Status: {response.status_code}"}
+        print(f"Failed to retrieve page. HTTP Status: {response.status_code} for {query}")
+        return None, None, None, None, None
 
     soup = BeautifulSoup(response.text, 'html.parser')
 
     # 1. Phonetic form - IPA
     ipa_nodes = soup.select('.uk .ipa')
-    ipa = ipa_nodes[0].text.strip() if ipa_nodes else None
-    ipa = f"/{ipa}/"
+
+    if ipa_nodes:
+        ipa = ipa_nodes[0].text.strip()
+        ipa = f"/{ipa}/"
+    else:
+        words = query.split()
+        if len(words) > 1:
+            return scrape_cambridge_dictionary(words[0])
+        else:
+            return None, None, None, None, None
+
     # 2. Definition
     def_nodes = soup.select('.def.ddef_d')
     definition = def_nodes[0].text.strip() if def_nodes else None
@@ -35,42 +54,45 @@ def scrape_cambridge_dictionary(word):
     ex_nodes = soup.select('.eg.deg')
     example = ex_nodes[0].text.strip() if ex_nodes else None
 
-    # 4. Voice recording
-    audio_nodes = soup.select('.uk audio source[type="audio/mpeg"]')
-    audio_url = None
-    if audio_nodes and 'src' in audio_nodes[0].attrs:
-        audio_url = f"https://dictionary.cambridge.org{audio_nodes[0]['src']}"
-
     # 5. File name
-    file_name = f"{word}_uk.mp3"
-    return word, definition, ipa, file_name, example, audio_url
+    file_name = f"{query.replace(' ', '_')}_uk.mp3"
+    return query, definition, ipa, file_name, example
 
 
-def download_audio(audio_url, filename, save_directory):
 
-    #Downloads the audio into pointed location
-    if not audio_url:
-        print("Error: No audio URL provided.")
-        return False
+async def process_single_word(word, save_directory):
+    voice = "en-GB-SoniaNeural"
+    word_str = str(word)
 
-    # Create the target directory if it does not already exist
-    os.makedirs(save_directory, exist_ok=True)
-
+    safe_text = re.sub(r'[\\/*?:"<>|]', "", word_str).strip()
+    filename = f"{safe_text.replace(' ', '_')}_uk.mp3"
     file_path = os.path.join(save_directory, filename)
 
-    # A User-Agent is required to prevent the download request from being blocked
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-    }
+    try:
+        communicate = edge_tts.Communicate(word_str, voice)
+        await communicate.save(file_path)
+        print(f"Success: '{word_str}' saved.")
+    except Exception as e:
+        print(f"Error for '{word_str}': {e}")
 
-    response = requests.get(audio_url, headers=headers, stream=True)
 
-    if response.status_code == 200:
-        with open(file_path, 'wb') as file:
-            for chunk in response.iter_content(chunk_size=1024):
-                file.write(chunk)
-        print(f"Success: Audio saved to {file_path}")
-        return True
-    else:
-        print(f"Error: Failed to download audio. HTTP Status: {response.status_code}")
-        return False
+#Main function that  manages creating the recordings
+# async def create_audio(words, save_directory):
+#     if not os.path.exists(save_directory):
+#         os.makedirs(save_directory)
+#
+#     #Task list
+#     tasks = [process_single_word(word, save_directory) for word in words]
+#
+#     #simultaneously realizing the task defined above
+#     await asyncio.gather(*tasks)
+
+
+async def create_audio(words, save_directory):
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+
+    for word in words:
+        await process_single_word(word, save_directory)
+
+

@@ -1,7 +1,8 @@
-from warnings import catch_warnings
+import asyncio
 import genanki
 import pandas as pd
-from the_data_scraper import scrape_cambridge_dictionary, download_audio
+from the_data_scraper import scrape_cambridge_dictionary, create_audio
+
 
 #Deck creation - deck_id should be unique
 my_deck = genanki.Deck(2051478910, "Eng")
@@ -15,8 +16,6 @@ style_listening = """
     font-family: "Segoe UI", Tahoma, sans-serif;
     font-size: 23px;
     text-align: center;
-    color: #ffffff;
-    background-color: #2c2c2c;
     line-height: 1.4;
 }
 
@@ -63,11 +62,6 @@ hr:first-of-type {
     fill: #ffffff;
 }
 
-/* 6. Night Mode Background Fix */
-.nightMode.card {
-    background-color: #1c1c1c;
-    color: #ffffff;
-}
 """
 
 style_cloze = """
@@ -76,8 +70,6 @@ style_cloze = """
     font-family: "Segoe UI", Tahoma, sans-serif;
     font-size: 23px;
     text-align: center;
-    color: #ffffff;           /* ZDANIE BIAŁE (Domyślne dla całej karty) */
-    background-color: #2c2c2c; /* CIEMNE TŁO */
     line-height: 1.4;
 }
 
@@ -107,11 +99,7 @@ style_cloze = """
     margin-left: 12px;
 }
 
-/* 5. TRYB NOCNY - Utrzymanie bieli dla zdania */
-.nightMode.card {
-    background-color: #1c1c1c; /* Głębsza czerń */
-    color: #ffffff !important; /* WYMUSZA BIAŁE ZDANIE */
-}
+
 
 .nightMode #definition {
     color: #4a90e2;           /* Utrzymujemy ten sam niebieski */
@@ -134,7 +122,7 @@ hr {
 
 #Declaration of 2 different types of flashcards:
 model_listening = genanki.Model(
-          212634552,
+          212134552,
           'Model recording to definition',
           #Fields of the flashcard
           fields=[
@@ -176,13 +164,7 @@ model_cloze = genanki.Model(
               'name': 'Card cloze',
 
                 #Front side
-                'qfmt': """{{cloze:Example}}<span id="definition">{{Definition}}</span><hr>
-                <script>
-                  var clozeElement = document.querySelector('.cloze');
-                  if (clozeElement && clozeElement.innerHTML == "[...]") {
-                    clozeElement.innerHTML = "____";
-                  }
-                </script>""",
+                'qfmt': '{{Example}}<span id="definition">{{Definition}}</span><hr>',
 
                 #Back side
                 'afmt': '''
@@ -194,7 +176,6 @@ model_cloze = genanki.Model(
               ''',
             }
           ],
-        model_type=genanki.Model.CLOZE,
     css=style_cloze
 )
 
@@ -209,8 +190,11 @@ def create_deck_file(deck_file_name, word_list):
         definition = row["Definition"]
         recording = row["Recording"]
         ipa = row["Ipa"]
-        example = cloze_creator(row["Example"], word)
 
+
+        if pd.isna(definition) or ipa == "/None/":
+            continue
+        example = cloze_creator(str(row["Example"]), word)
 
         my_note_recording = genanki.Note(
             model=model_listening,
@@ -226,11 +210,11 @@ def create_deck_file(deck_file_name, word_list):
         my_deck.add_note(my_note_cloze)
 
     my_package.media_files = recordings_files
-    my_package.write_to_file(f'{deck_file_name}.apkg')
+    my_package.write_to_file(f"{deck_file_name}.apkg")
 
 #String operation required to create html code for cloze card type
 def cloze_creator(sentence, word):
-        return sentence.replace(word, f"{{{{c1::{word}}}}}")
+        return sentence.replace(word, "______")
 
 
 #The function takes a raw DataFrame of words and appends the definition, IPA, audio recording, and an example sentence for each word from the Cambridge Dictionary.
@@ -241,22 +225,25 @@ def prepare_word_list(word_list):
         current_word = word_list.iloc[current_row, 0]
 
         #Scraping data from the dictionary
-        word, definition, ipa, recording_file_name, example, audio_url = scrape_cambridge_dictionary(current_word)
+        word, definition, ipa, recording_file_name, example = scrape_cambridge_dictionary(current_word)
 
         #Assiging the elements
         full_word_list.loc[current_row, ["Word", "Definition", "Ipa", "Recording", "Example"]] = [word, definition, ipa, recording_file_name, example]
 
-        #Downloading audio file to the chosen directory - "path" shall be the directory location
-        download_audio(audio_url, recording_file_name, r"path")
+        #Creating audio file to the chosen directory - "path" shall be the directory location
 
-    full_word_list.to_excel("updated.xlsx")
+    asyncio.run(create_audio(full_word_list["Word"], r"./audio_files"))
+
+    full_word_list.to_excel(r"word_lists/updated.xlsx")
     return full_word_list
 
 
 
-
 if __name__ == "__main__":
-    imported_word_list = pd.read_excel("raw_word_list.xlsx", header=None)
-    full_word_list = prepare_word_list(imported_word_list)
-    create_deck_file("ready_to_import.apkg", full_word_list)
+    imported_word_list = pd.read_excel(r"word_lists/updated.xlsx")
+    create_deck_file("ready_to_import.apkg", imported_word_list)
+
+
+
+
 
