@@ -8,11 +8,7 @@ import os
 import re
 
 
-##The code below was mostly created by AI, it was only implemented and adjusted accordingly to my needs
-
-
-
-
+##The code below was in a big part created by AI, it was only implemented and adjusted accordingly to my needs
 
 def scrape_cambridge_dictionary(query):
 
@@ -54,7 +50,7 @@ def scrape_cambridge_dictionary(query):
     ex_nodes = soup.select('.eg.deg')
     example = ex_nodes[0].text.strip() if ex_nodes else None
 
-    # 5. File name
+    # 4. File name
     file_name = f"{query.replace(' ', '_')}_uk.mp3"
     return query, definition, ipa, file_name, example
 
@@ -76,18 +72,16 @@ async def process_single_word(word, save_directory):
         print(f"Error for '{word_str}': {e}")
 
 
-#Main function that  manages creating the recordings
-# async def create_audio(words, save_directory):
-#     if not os.path.exists(save_directory):
-#         os.makedirs(save_directory)
-#
-#     #Task list
-#     tasks = [process_single_word(word, save_directory) for word in words]
-#
-#     #simultaneously realizing the task defined above
-#     await asyncio.gather(*tasks)
+#Function that  manages creating the recordings, does it by taking advantage of asynchronicity of edge - TTS function
+async def create_audio_sim(words, save_directory):
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
 
+    tasks = [process_single_word(word, save_directory) for word in words]
 
+    await asyncio.gather(*tasks)
+
+#Function that works in an ordinary, synchronic way, created to be used for huge amount of queries to avoid getting flagged by the edge api.
 async def create_audio(words, save_directory):
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
