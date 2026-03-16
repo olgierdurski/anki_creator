@@ -10,6 +10,7 @@ my_package = genanki.Package(my_deck)
 
 ##CSS code to customize the cards - 95% AI generated!!!
 ##Html and css parts of the code below are mostly AI generated!
+##Anki flashcard is basically an html object
 style_listening = """
 /* 1. Base Card Style */
 .card {
@@ -230,18 +231,12 @@ def prepare_word_list(word_list):
         #Assiging the elements
         full_word_list.loc[current_row, ["Word", "Definition", "Ipa", "Recording", "Example"]] = [word, definition, ipa, recording_file_name, example]
 
-        #Creating audio file to the chosen directory - "path" shall be the directory location
-
+    #Creating audio file to the chosen directory - "path" shall be the directory location
     asyncio.run(create_audio(full_word_list["Word"], r"./audio_files"))
 
     full_word_list.to_excel(r"word_lists/updated.xlsx")
     return full_word_list
 
-
-
-if __name__ == "__main__":
-    imported_word_list = pd.read_excel(r"word_lists/updated.xlsx")
-    create_deck_file("ready_to_import.apkg", imported_word_list)
 
 
 
