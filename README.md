@@ -2,7 +2,8 @@
 
 Anki is a highly effective learning application built on the principles of spaced repetition and active recall. This script automates the monotonous task of manually searching for dictionary definitions, phonetic transcriptions (IPA), and audio pronunciation recordings. 
 
-The tool accepts a simple text file containing a list of words and outputs a fully formatted Anki deck, ready for immediate import. Originally created as a personal solution to the tedious process of preparing flashcards for learning Spanish and English, it has already been used to generate over **5,000 flashcards**.
+The tool accepts a simple text file containing a list of words and outputs a fully formatted Anki deck, ready for immediate import. Originally created as a personal solution to the tedious process of preparing flashcards for learning Spanish and English, it has already been used to generate over **5,000 flashcards**. 
+It operates on the uk's english pronunciation standard.
 
 ---
 
